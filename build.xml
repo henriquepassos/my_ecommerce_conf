@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="project" default="default">
+
+	<!--
+	
+/core-service=management/security-realm=ejb-security-realm:add()
+/core-service=management/security-realm=ejb-security-realm/server-identity=secret:add(value=dGVzdA==)
+
+/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=remote-ejb:add(host=localhost, port=4547)
+
+/subsystem=remoting/remote-outbound-connection=remote-ejb-connection:add(outbound-socket-binding-ref=remote-ejb, security-realm=ejb-security-realm, username=ejb)
+/subsystem=remoting/remote-outbound-connection=remote-ejb-connection/property=SASL_POLICY_NOANONYMOUS:add(value=false)
+/subsystem=remoting/remote-outbound-connection=remote-ejb-connection/property=SSL_ENABLED:add(value=false)
+
+-->
+
+	<property file="build.properties" />
+
+	<!--jboss server download, install and config-->
+	<!--<target name="default" depends="jboss_get,jboss_install,jboss_start,jboss_conf" />-->
+
+	<!--jboss server install and config-->
+	<target name="default" depends="jboss_install,jboss_start,jboss_conf" />
+
+	<target name="jboss_get">
+
+		<get dest="${dev_dir}" src="http://download.jboss.org/jbossas/7.1/jboss-as-7.1.1.Final/jboss-as-7.1.1.Final.zip" />
+
+	</target>
+
+	<target name="jboss_install">
+
+		<delete dir="${jboss_dir}" />
+		<delete dir="${jboss_ejb}" />
+		<delete dir="${jboss_web}" />
+		<delete dir="${jboss_ws}" />
+
+		<unzip src="${jboss_zip}" dest="${dev_dir}" />
+
+		<copy todir="${jboss_ejb}">
+			<fileset dir="${jboss_dir}" />
+		</copy>
+		<copy todir="${jboss_web}">
+			<fileset dir="${jboss_dir}" />
+		</copy>
+		<move todir="${jboss_ws}">
+			<fileset dir="${jboss_dir}" />
+		</move>
+
+		<chmod file="${jboss_ejb}/bin/standalone.sh" perm="+x" />
+		<chmod file="${jboss_web}/bin/standalone.sh" perm="+x" />
+		<chmod file="${jboss_ws}/bin/standalone.sh" perm="+x" />
+
+	</target>
+
+	<target name="jboss_start">
+
+		<fileset dir="." id="start">
+			<include name="start.*" />
+		</fileset>
+
+		<copy todir=".">
+			<fileset dir="start" />
+		</copy>
+
+		<replace token="@jboss_ejb@" value="${jboss_ejb}">
+			<fileset refid="start" />
+		</replace>
+		<replace token="@jboss_web@" value="${jboss_web}">
+			<fileset refid="start" />
+		</replace>
+		<replace token="@jboss_ws@" value="${jboss_ws}">
+			<fileset refid="start" />
+		</replace>
+
+		<chmod perm="+x">
+			<fileset dir="${dev_dir}">
+				<include name="start.*" />
+			</fileset>
+		</chmod>
+
+	</target>
+
+	<target name="jboss_conf">
+
+		<copy todir="${dev_dir}" overwrite="true">
+			<fileset dir=".">
+				<exclude name="build.*" />
+				<exclude name="start/**" />
+			</fileset>
+		</copy>
+
+		<delete>
+			<fileset dir=".">
+				<include name="start.*" />
+			</fileset>
+		</delete>
+		
+		<chmod file="${dev_dir}/start.*" perm="+x" />
+
+	</target>
+
+</project>
